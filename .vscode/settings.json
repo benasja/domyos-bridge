@@ -1,0 +1,13 @@
+{
+    // ESP-IDF extension v2.x finds an existing (non-EIM) install from these
+    // variables. IDF_PYTHON_ENV_PATH is required here: the IDF v5.3 Python env
+    // was built with macOS Python 3.9, not the Homebrew 3.14 on PATH.
+    "idf.customExtraVars": {
+        "IDF_PATH": "/Users/benas/esp/esp-idf",
+        "IDF_TOOLS_PATH": "/Users/benas/.espressif",
+        "IDF_PYTHON_ENV_PATH": "/Users/benas/.espressif/python_env/idf5.3_py3.9_env"
+    },
+    "idf.currentSetup": "/Users/benas/esp/esp-idf",
+    "idf.flashType": "UART",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"
+}

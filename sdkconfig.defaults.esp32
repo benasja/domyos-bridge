@@ -1,0 +1,4 @@
+# Classic ESP32 (WROOM-32): BLE-only controller frees ~30 KB of RAM, and its
+# BLE connection limit is configured separately from NimBLE's.
+CONFIG_BTDM_CTRL_MODE_BLE_ONLY=y
+CONFIG_BTDM_CTRL_BLE_MAX_CONN=3

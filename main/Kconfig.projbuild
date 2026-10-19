@@ -1,0 +1,114 @@
+menu "Domyos Bridge"
+
+    config BRIDGE_BIKE_NAME_PREFIX
+        string "Bike advertised name prefix"
+        default "Domyos-Bike"
+        help
+            The FTMS client connects to a device advertising the Fitness
+            Machine Service (0x1826) or whose name starts with this prefix.
+
+    config BRIDGE_CPS_DEVICE_NAME
+        string "Advertised name of the power sensor"
+        default "Domyos Bridge"
+        help
+            Complete Local Name shown on the Apple Watch under
+            Settings > Bluetooth > Health Devices. Max 29 characters.
+
+    config BRIDGE_DIS_MANUFACTURER
+        string "Device Information: manufacturer name"
+        default "DIY"
+
+    config BRIDGE_DIS_MODEL
+        string "Device Information: model number"
+        default "FTMS-CPS Bridge"
+
+    config BRIDGE_STALE_TIMEOUT_MS
+        int "Bike data stale timeout (ms)"
+        default 3000
+        range 1000 30000
+        help
+            If no cadence/power arrives for this long, the bridge reports
+            0 W and freezes the crank counters.
+
+    config BRIDGE_POWER_SPIKE_FILTER
+        bool "Hold back one-second power spikes from the bike"
+        default y
+        help
+            The Domyos occasionally sends one update with an absurd power
+            (e.g. 135 -> 456 -> 139 W), which inflates peak power and the FTP
+            estimate on the Watch. A rise larger than both thresholds below
+            is published only if it lasts the confirm time; otherwise the
+            previous value is kept. Drops in power are never delayed.
+
+    config BRIDGE_SPIKE_MIN_JUMP_W
+        int "Spike: minimum rise (W)"
+        depends on BRIDGE_POWER_SPIKE_FILTER
+        default 60
+        range 20 500
+        help
+            Largest real second-to-second rise seen on the Domyos: ~56 W.
+
+    config BRIDGE_SPIKE_JUMP_PERCENT
+        int "Spike: minimum rise (% of recent power)"
+        depends on BRIDGE_POWER_SPIKE_FILTER
+        default 50
+        range 10 500
+
+    config BRIDGE_SPIKE_CONFIRM_MS
+        int "Spike: a rise lasting this long is real (ms)"
+        depends on BRIDGE_POWER_SPIKE_FILTER
+        default 2000
+        range 1500 5000
+        help
+            Must be longer than one bike update (~1 s). Real hard
+            accelerations reach the Watch this much later.
+
+    config BRIDGE_FAKE_DATA
+        bool "Fake data mode (Milestone 1): send constant power and cadence"
+        default n
+        help
+            Ignore the bike and publish a constant power/cadence. Used to
+            verify that the Watch pairs and records before the FTMS client
+            exists. Turn off for real riding.
+
+    config BRIDGE_FAKE_POWER_W
+        int "Fake power (W)"
+        depends on BRIDGE_FAKE_DATA
+        default 100
+        range 0 2000
+
+    config BRIDGE_FAKE_CADENCE_RPM
+        int "Fake cadence (rpm)"
+        depends on BRIDGE_FAKE_DATA
+        default 80
+        range 0 200
+
+    config BRIDGE_VERBOSE_LOG
+        bool "DEBUG logging for the bridge (raw packets, every notification)"
+        default n
+        help
+            Sets the bridge's own log tags (bridge, cps, ftms) to DEBUG at
+            boot: raw 0x2AD2 hex and every decoded packet. NimBLE's internal
+            log level is configured separately.
+
+    config BRIDGE_STATUS_LED
+        bool "Drive a status LED"
+        default y if IDF_TARGET_ESP32C3
+        default n
+        help
+            Slow blink = looking for the bike, solid = bike connected,
+            double blink = bike connected and a Watch subscribed.
+
+    config BRIDGE_STATUS_LED_GPIO
+        int "Status LED GPIO"
+        depends on BRIDGE_STATUS_LED
+        default 8
+        help
+            ESP32-C3 Super Mini: onboard blue LED on GPIO8.
+
+    config BRIDGE_STATUS_LED_ACTIVE_LOW
+        bool "Status LED is active-low"
+        depends on BRIDGE_STATUS_LED
+        default y
+
+endmenu

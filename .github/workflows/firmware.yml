@@ -43,7 +43,6 @@ jobs:
           esp_idf_version: v5.3.1
           target: ${{ matrix.target }}
           command: >-
-            git config --global --add safe.directory '*' &&
             idf.py set-target ${{ matrix.target }} build &&
             cd build &&
             esptool.py --chip ${{ matrix.target }} merge_bin

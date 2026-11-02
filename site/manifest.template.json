@@ -1,0 +1,19 @@
+{
+  "name": "Domyos Bridge",
+  "version": "@VERSION@",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [{ "path": "firmware/domyos-bridge-esp32c3.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [{ "path": "firmware/domyos-bridge-esp32s3.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32",
+      "parts": [{ "path": "firmware/domyos-bridge-esp32.bin", "offset": 0 }]
+    }
+  ]
+}

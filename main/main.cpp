@@ -3,7 +3,7 @@
 // The FTMS client (NimBLE host task) writes bike data into shared_state; the
 // 1 Hz publish task turns it into Cycling Power notifications. With
 // CONFIG_BRIDGE_FAKE_DATA the bike is ignored and a constant power/cadence is
-// published instead (Milestone 1 test mode).
+// published instead (for testing the Watch side alone).
 
 #include <initializer_list>
 
@@ -150,7 +150,7 @@ extern "C" void app_main(void) {
 #endif
 
 #if CONFIG_BRIDGE_FAKE_DATA
-    ESP_LOGW(TAG, "*** FAKE DATA MODE: sending constant %d W / %d rpm (Milestone 1 test) ***",
+    ESP_LOGW(TAG, "*** FAKE DATA MODE: sending constant %d W / %d rpm ***",
              CONFIG_BRIDGE_FAKE_POWER_W, CONFIG_BRIDGE_FAKE_CADENCE_RPM);
     shared_state().set_link(BikeLink::Connected);
 #else

@@ -64,7 +64,7 @@ menu "Domyos Bridge"
             accelerations reach the Watch this much later.
 
     config BRIDGE_FAKE_DATA
-        bool "Fake data mode (Milestone 1): send constant power and cadence"
+        bool "Fake data mode: send constant power and cadence"
         default n
         help
             Ignore the bike and publish a constant power/cadence. Used to

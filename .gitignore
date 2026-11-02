@@ -4,3 +4,7 @@ sdkconfig
 sdkconfig.old
 managed_components/
 dependencies.lock
+
+# Local editor and toolchain setup (machine-specific paths)
+.vscode/
+tools/env.sh

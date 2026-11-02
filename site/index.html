@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domyos Bridge installer</title>
+<meta name="description" content="Flash an ESP32 from your browser so your Apple Watch records power and cadence from a Bluetooth FTMS indoor bike.">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.4.0/dist/web/install-button.js?module"></script>
+<style>
+  :root {
+    --bg: #fafaf8; --fg: #1b1b1a; --muted: #5d5d58; --card: #ffffff;
+    --line: #e4e3de; --accent: #0b6bcb; --accent-fg: #ffffff; --code: #f1f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --fg: #ecebe6; --muted: #a3a29b; --card: #1e1e1c;
+      --line: #33332f; --accent: #4c9ef0; --accent-fg: #0b0b0a; --code: #262624;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 12px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 8px; }
+  p, li { color: var(--fg); }
+  .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 28px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px; margin: 20px 0;
+  }
+  .install button {
+    font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-fg);
+    border: 0; border-radius: 8px; padding: 12px 22px; cursor: pointer;
+  }
+  .note { color: var(--muted); font-size: 0.92rem; margin: 12px 0 0; }
+  ol { padding-left: 1.3rem; }
+  li { margin: 6px 0; }
+  code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size: 0.92em; }
+  a { color: var(--accent); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Your indoor bike's power, on your Apple Watch</h1>
+  <p class="lead">A 3&nbsp;€ ESP32 sits next to the bike, reads its power and cadence over
+  Bluetooth, and shows up on the Watch as a normal power meter. Indoor Cycle workouts then
+  record real watts into Apple Health. No phone app has to stay open.</p>
+
+  <div class="card">
+    <strong>Install in one click</strong>
+    <p class="note" style="margin-top:4px">Plug the ESP32 into this computer with a USB data cable, then:</p>
+    <div class="install" style="margin-top:14px">
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate">Install Domyos Bridge</button>
+        <span slot="unsupported">Your browser can't talk to USB devices. Open this page in
+          Chrome or Edge on a computer.</span>
+        <span slot="not-allowed">The installer needs a secure (https) page.</span>
+      </esp-web-install-button>
+    </div>
+    <p class="note">Works with ESP32-C3, ESP32-S3 and the classic ESP32. If the board isn't
+    listed after you click, hold <strong>BOOT</strong> while plugging it in and try again.</p>
+  </div>
+
+  <h2>What you need</h2>
+  <ul>
+    <li>An indoor bike that speaks Bluetooth FTMS. Most bikes that work with Zwift or Kinomap
+      do. Tested on a Decathlon Domyos.</li>
+    <li>An ESP32 board. An ESP32-C3 Super Mini (about 3&nbsp;€) is plenty.</li>
+    <li>An Apple Watch on watchOS 10 or later.</li>
+    <li>A USB charger to keep the board powered next to the bike.</li>
+  </ul>
+
+  <h2>After installing</h2>
+  <ol>
+    <li>Power the board near the bike and wake the bike up. It connects on its own and
+      remembers the bike.</li>
+    <li>On the Watch: <strong>Settings → Bluetooth</strong>, and under <em>Health Devices</em>
+      tap <strong>Domyos Bridge</strong>.</li>
+    <li>Start <strong>Workout → Indoor Cycle</strong> and pedal. If power and cadence don't
+      show, add those views in the workout's <strong>⋯ → Workout Views</strong>.</li>
+  </ol>
+  <p>Close any app that's connected to the bike first (Kinomap, the Domyos app,
+  Zwift). Most bikes allow only one connection.</p>
+
+  <footer>
+    Open source: <a href="https://github.com/benasja/domyos-bridge">github.com/benasja/domyos-bridge</a>.
+    Bug reports and "it works on my bike" reports are both welcome.
+  </footer>
+</main>
+</body>
+</html>

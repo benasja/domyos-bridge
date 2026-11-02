@@ -241,8 +241,9 @@ void on_indoor_bike_data(const uint8_t* buf, size_t len, size_t total_len) {
 }
 
 // ---- GATT discovery chain ---------------------------------------------------
-// MTU -> FTMS service -> characteristics -> 0x2AD2 descriptors -> read 0x2ACC
-// -> write 0x2AD2 CCCD. Each step starts the next from its completion callback.
+// MTU -> (first connection only: GATT table dump) -> FTMS service ->
+// characteristics -> 0x2AD2 descriptors -> read 0x2ACC -> write 0x2AD2 CCCD.
+// Each step starts the next from its completion callback.
 
 void subscribe();
 
@@ -412,6 +413,105 @@ void discover_service() {
     if (rc != 0) drop_connection("Service discovery could not start", rc);
 }
 
+// ---- GATT table dump (once per boot) ----------------------------------------
+// Lists every service and characteristic the bike offers, so a log shows
+// whether it has more than FTMS (e.g. Domyos' own UART-style channel, which
+// is what the console listens on for its display). Purely informational:
+// any failure here just moves on to the FTMS discovery above.
+
+struct DumpSvc {
+    uint16_t start;
+    uint16_t end;
+};
+constexpr size_t kMaxDumpSvcs = 16;
+DumpSvc s_dump_svcs[kMaxDumpSvcs];
+size_t s_dump_count = 0;
+size_t s_dump_next = 0;
+bool s_dump_done = false;
+
+// Microchip ISSC "transparent UART" service, used by Domyos consoles.
+constexpr const char* kUuidDomyosUart = "49535343-fe7d-4ae5-8fa9-9fafd205e455";
+
+void dump_next_service();
+
+int on_dump_characteristic(uint16_t conn, const ble_gatt_error* error, const ble_gatt_chr* chr,
+                           void*) {
+    if (conn != s_peer.conn) return 0;
+    if (error->status == 0) {
+        char uuid[BLE_UUID_STR_LEN];
+        ble_uuid_to_str(&chr->uuid.u, uuid);
+        const uint8_t p = chr->properties;
+        ESP_LOGI(TAG, "    chr %s handle=%u%s%s%s%s%s", uuid, chr->val_handle,
+                 (p & BLE_GATT_CHR_PROP_READ) ? " read" : "",
+                 (p & BLE_GATT_CHR_PROP_WRITE) ? " write" : "",
+                 (p & BLE_GATT_CHR_PROP_WRITE_NO_RSP) ? " write-no-rsp" : "",
+                 (p & BLE_GATT_CHR_PROP_NOTIFY) ? " notify" : "",
+                 (p & BLE_GATT_CHR_PROP_INDICATE) ? " indicate" : "");
+        return 0;
+    }
+    if (error->status != BLE_HS_EDONE) {
+        ESP_LOGW(TAG, "    characteristic listing failed (status=%d)", error->status);
+    }
+    dump_next_service();
+    return 0;
+}
+
+void dump_next_service() {
+    if (s_dump_next >= s_dump_count) {
+        ESP_LOGI(TAG, "GATT table done");
+        s_dump_done = true;
+        discover_service();
+        return;
+    }
+    const DumpSvc& s = s_dump_svcs[s_dump_next++];
+    const int rc = ble_gattc_disc_all_chrs(s_peer.conn, s.start, s.end, on_dump_characteristic,
+                                           nullptr);
+    if (rc != 0) {
+        ESP_LOGW(TAG, "    characteristic listing could not start (rc=%d)", rc);
+        dump_next_service();
+    }
+}
+
+int on_dump_service(uint16_t conn, const ble_gatt_error* error, const ble_gatt_svc* svc, void*) {
+    if (conn != s_peer.conn) return 0;
+    if (error->status == 0) {
+        char uuid[BLE_UUID_STR_LEN];
+        ble_uuid_to_str(&svc->uuid.u, uuid);
+        const bool domyos = strcmp(uuid, kUuidDomyosUart) == 0;
+        ESP_LOGI(TAG, "  svc %s handles %u..%u%s", uuid, svc->start_handle, svc->end_handle,
+                 domyos ? "  <-- Domyos console channel" : "");
+        if (s_dump_count < kMaxDumpSvcs) {
+            s_dump_svcs[s_dump_count++] = {svc->start_handle, svc->end_handle};
+        }
+        return 0;
+    }
+    if (error->status != BLE_HS_EDONE) {
+        ESP_LOGW(TAG, "Service listing failed (status=%d); skipping the GATT table",
+                 error->status);
+        discover_service();
+        return 0;
+    }
+    dump_next_service();
+    return 0;
+}
+
+// Runs the dump until one completes after boot (a connection that drops
+// halfway tries again next time), then the normal FTMS discovery.
+void dump_gatt_then_discover() {
+    if (s_dump_done) {
+        discover_service();
+        return;
+    }
+    s_dump_count = 0;
+    s_dump_next = 0;
+    ESP_LOGI(TAG, "GATT table of %s:", fmt_addr(s_peer.addr).s);
+    const int rc = ble_gattc_disc_all_svcs(s_peer.conn, on_dump_service, nullptr);
+    if (rc != 0) {
+        ESP_LOGW(TAG, "Service listing could not start (rc=%d)", rc);
+        discover_service();
+    }
+}
+
 int on_mtu(uint16_t conn, const ble_gatt_error* error, uint16_t mtu, void*) {
     if (conn != s_peer.conn) return 0;
     if (error->status == 0) {
@@ -419,7 +519,7 @@ int on_mtu(uint16_t conn, const ble_gatt_error* error, uint16_t mtu, void*) {
     } else {
         ESP_LOGW(TAG, "MTU exchange failed (status=%d); continuing with 23", error->status);
     }
-    discover_service();
+    dump_gatt_then_discover();
     return 0;
 }
 
